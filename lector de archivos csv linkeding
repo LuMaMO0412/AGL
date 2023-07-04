@@ -1,0 +1,181 @@
+import itertools
+import csv
+import re
+import os
+
+# Exporting csv variables
+file_name = ""
+headers = None
+
+# Databases
+risky_domains = []
+rejected_emails = []
+verified_emails = []
+unknown_emails = []
+mx_records = {}
+
+# Results
+clean_leads = []
+writen_sales_profiles = []
+writen_emails = []
+
+# Cleaning parameters
+company_cleaners = ["universidad", "university"]
+title_cleaners = ["assistant", "lawyer", "treasury", "attorney", "freelance", 
+				"accountant", "student", "professor", "asistente", "abogado", 
+				"tesorero", "contador", "estudiante", "profesor"]
+
+
+# Loads risky domains
+with open("risky_database.txt") as risky_file:
+	for row in risky_file:
+		risky_domains.append(row.rstrip())
+	risky_file.close()
+
+
+# Loads verified emails
+with open("verified_database.txt") as verified_file:
+	for row in verified_file:
+		verified_emails.append(row.rstrip())
+	verified_file.close()
+
+
+# Loads rejected emails
+with open("rejected_database.txt") as rejected_file:
+	for row in rejected_file:
+		rejected_emails.append(row.rstrip())
+	rejected_file.close()
+
+
+# Loads unknown emails
+with open("unknown_database.txt") as unknown_file:
+	for row in unknown_file:
+		unknown_emails.append(row.rstrip())
+	unknown_file.close
+
+
+# Loads file to be clean
+with open("exports_WK 7 Verified Risky_348.csv",encoding='utf-8') as csv_file:
+	# Saves the file name for later export
+	file_name = os.path.basename(csv_file.name)
+	file_name = "clean_" + file_name
+
+	# Creates a csv reader object
+	csv_reader = csv.reader(csv_file)
+
+	# Saves the headers
+	headers = next(csv_reader)
+	headers.remove("ID")
+	headers.append("MX Record")
+	headers.append("Domain")
+
+	# Loops through the file data
+	for row in csv_reader:
+		# Temporally save potential data to be clean
+		buffer_first_name = row[1]
+		buffer_last_name = row[2]
+		buffer_sales_profile = row[3]
+		buffer_location = row[4]
+		buffer_company = row[5]
+		buffer_title = row[6]
+		buffer_email = row[7]
+		buffer_status = ""
+		buffer_mx_record = ""
+		buffer_domain = ""
+
+		##########
+		# Domain #
+		##########
+
+		# Gets email domain
+		try:
+			buffer_domain = buffer_email.split("@")[1]
+		except IndexError:
+			buffer_domain = "NO DOMAIN"
+
+		# Check if domain / email is in any database
+		if buffer_domain in risky_domains:
+			buffer_status = "Risky"
+		elif buffer_email in verified_emails:
+			buffer_status = "Verified"
+		elif buffer_email in rejected_emails:
+			buffer_status = "Rejected"
+
+
+		##############
+		# First name #
+		##############
+
+		# Replace common characters for better visual ones (first name)
+		buffer_first_name = buffer_first_name.replace("-"," ")
+
+		# Replace common characters for better visual ones (last name)
+		buffer_last_name = buffer_last_name.replace("-"," ")
+
+		# Clean the first name of the lead
+		match_first_name = re.search("[^A-Za-z0-9áéíóúñ.,\s()]", buffer_first_name)
+		if match_first_name is not None:
+			pass
+			"""
+			# Removes emojis and unwanted characters
+			buffer_first_name = buffer_first_name[:match_first_name.start()] + buffer_first_name[match_first_name.end() + 1:]
+			try:
+				if buffer_first_name[0] == " ":
+					buffer_first_name = buffer_first_name[1:]
+			except IndexError:
+				buffer_first_name = ""
+			"""
+
+		# Removes everything after comma, if any
+		comma_index = buffer_first_name.find(",")
+		if comma_index != -1:
+			buffer_first_name = buffer_first_name[:comma_index]
+		buffer_first_name = buffer_first_name.title()
+
+		# Removes extra white spaces
+		buffer_first_name = ' '.join(buffer_first_name.split())
+
+		##############
+		# Last name #
+		##############
+
+		# Clean the last name of the lead
+		match_last_name = re.search("[^A-Za-z0-9áéíóúñ.,\s()]", buffer_last_name)
+		if match_last_name is not None:
+			pass
+			"""
+			# Removes emojis and unwanted characters
+			buffer_last_name = buffer_last_name[:match_last_name.start()] + buffer_last_name[match_last_name.end() + 1:]
+			if buffer_last_name[0] == " ":
+				buffer_last_name = buffer_last_name[1:]
+			"""
+		# Removes everything after comma, if any
+		comma_index = buffer_last_name.find(",")
+		if comma_index != -1:
+			buffer_last_name = buffer_last_name[:comma_index]
+		buffer_last_name = buffer_last_name.title()
+
+
+		# Removes extra white spaces
+		buffer_last_name = ' '.join(buffer_last_name.split())
+
+
+		########
+		# Save #
+		########
+
+		lead_to_append = [buffer_first_name, buffer_last_name, buffer_sales_profile, buffer_location,
+						buffer_company, buffer_title, buffer_email, buffer_status, buffer_mx_record, buffer_domain]
+		clean_leads.append(lead_to_append)
+
+# Creates the clean file
+with open(file_name, 'w', newline='', encoding="utf-8") as clean_csv:
+	csv_writer = csv.writer(clean_csv)
+	csv_writer.writerow(headers)
+	for lead in clean_leads:
+		# Prevent duplicates based on sales profile URL and email
+			if lead[2] not in writen_sales_profiles and lead[6] not in writen_emails:
+				csv_writer.writerow(lead)
+				writen_sales_profiles.append(lead[2])
+				writen_emails.append(lead[6])
+	csv_file.close()
