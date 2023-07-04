@@ -1,0 +1,70 @@
+import csv
+
+emails = []
+
+with open('D:\Prueba correos\All mail Including Spam and Trash.csv', newline='') as csvfile:
+    reader = csv.reader(csvfile)
+    for row in reader:
+        name, email, date = row[0].split(';')
+        emails.append({'name': name, 'email': email, 'date': date})
+        for row in csv_reader:
+		# Temporally save potential data to be clean
+		buffer_first_name = row[0] 
+		buffer_last_name = row[1]
+		buffer_company = row[3]
+		buffer_location = row[31] + " " + row[30] + " " +row[29]
+		buffer_email = row[5]
+		buffer_title = row[2]
+		buffer_department = row[9]
+		buffer_headcount = row[21]
+		buffer_industry = row[22]
+		buffer_personal = row[24]
+		buffer_website = row[25]
+		buffer_company_url = row[26]
+		buffer_tech = row[38]
+		buffer_funding = row[41]
+
+		buffer_status = ""
+		buffer_domain = ""
+
+		##########
+		# Domain #
+		##########
+
+		# Gets email domain
+		try:
+			buffer_domain = buffer_email.split("@")[1]
+		except IndexError:
+			buffer_domain = "NO DOMAIN"
+
+		# Check if domain / email is in any database
+		if buffer_domain in risky_domains:
+			buffer_status = "Risky"
+		elif buffer_email in verified_emails:
+			buffer_status = "Verified"
+		elif buffer_email in rejected_emails:
+			buffer_status = "Rejected"
+
+		########
+		# Save #
+		########
+
+		headers = ["First Name", "Last Name", "Location", "Company", "Title", "Department", "Email", "Status", "Domain", "Headcount",
+		"Industry", "Technologies", "Funding Stage"]
+		lead_to_append = [buffer_first_name, buffer_last_name, buffer_location,
+						buffer_company, buffer_title, buffer_department, buffer_email, buffer_status, buffer_mx_record, 
+						buffer_domain, buffer_headcount, buffer_industry, buffer_personal, buffer_website, buffer_company_url,
+						buffer_tech, buffer_funding]
+		clean_leads.append(lead_to_append)
+
+# Creates the clean file
+with open(file_name, 'w', newline='') as clean_csv:
+	csv_writer = csv.writer(clean_csv)
+	csv_writer.writerow(headers)
+	for lead in clean_leads:
+		# Prevent duplicates based on sales profile URL and email
+			if lead[6] not in writen_emails:
+				csv_writer.writerow(lead)
+				writen_emails.append(lead[6])
+
+print(emails)
